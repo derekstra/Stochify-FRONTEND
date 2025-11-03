@@ -1,18 +1,58 @@
-.home-page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  background: radial-gradient(circle at 30% 30%, #1e1e26, #0e0e0f);
-  color: #f1e9fd;
-  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  font-size: 3rem;
-  letter-spacing: 0.5px;
-  text-shadow: 0 2px 10px rgba(139, 92, 246, 0.3);
-  transition: background 0.6s ease;
+/* Reset browser defaults */
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #0e0e0f;
 }
 
-.home-page:hover {
-  background: radial-gradient(circle at 70% 70%, #2a2a35, #0e0e0f);
-  text-shadow: 0 0 15px rgba(139, 92, 246, 0.6);
+/* ===== Main Container ===== */
+.home-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #0e0e0f;
+  color: #f1e9fd;
+  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+/* ===== Left side (Chatbox wrapper) ===== */
+.chat-wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #090a0a;
+  border-right: 1px solid #222;
+  box-sizing: border-box;
+  padding: 2rem; /* ✅ inner space */
+}
+
+/* ===== Draggable Divider ===== */
+.resizer {
+  width: 6px;
+  cursor: ew-resize;
+  background: transparent; /* invisible */
+  transition: background 0.2s;
+  user-select: none; /* prevent text selection while dragging */
+}
+
+/* ===== Right side (Visualization) ===== */
+.visual-wrapper {
+  flex: 1;
+  height: 100%;
+  background: #0f1011;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Optional: remove default spacing */
+.chat-wrapper > *, 
+.visual-wrapper > * {
+  margin: 0;
+  padding: 0;
 }
