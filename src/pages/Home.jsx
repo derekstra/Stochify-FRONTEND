@@ -1,5 +1,5 @@
-import "../styles/project.css";
+import "../styles/Home.css";
 
-export default function Project() {
+export default function Home() {
   return <div className="home-page">Home</div>;
 }
