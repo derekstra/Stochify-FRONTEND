@@ -27,7 +27,7 @@ html, body {
   background: #090a0a;
   border-right: 1px solid #222;
   box-sizing: border-box;
-  padding: 2rem; /* ✅ inner space */
+  padding: 1rem; /* ✅ inner space */
 }
 
 /* ===== Draggable Divider ===== */
