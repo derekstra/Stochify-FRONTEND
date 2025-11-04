@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { FaArrowUp } from "react-icons/fa6";
+import { FaArrowUp, FaCircle } from "react-icons/fa6";
+import { LuSquarePen } from "react-icons/lu";
 import "./ChatSection.css";
 
 export default function ChatSection() {
@@ -10,12 +11,18 @@ export default function ChatSection() {
   const pushMessage = (role, content) =>
     setMessages((prev) => [...prev, { role, content }]);
 
+  const handleNewChat = () => {
+    setMessages([]);
+    setInput("");
+    // clear visuals area too
+    window.dispatchEvent(new CustomEvent("stochify:viz", { detail: { code: "", dimension: "", analysis: "" } }));
+  };
+
   const handleSend = async (e) => {
     e.preventDefault();
     const text = input.trim();
     if (!text || loading) return;
 
-    // show user message
     pushMessage("user", text);
     setInput("");
     setLoading(true);
@@ -37,7 +44,6 @@ export default function ChatSection() {
       const data = await res.json();
       const { analysis, dimension, code, chat_response } = data;
 
-      // Prefer explicit chat_response; fallback to parsing analysis
       let reply = chat_response;
       if (!reply) {
         try {
@@ -50,7 +56,6 @@ export default function ChatSection() {
 
       pushMessage("assistant", reply);
 
-      // Optional: broadcast the viz to the right panel (VisualSection can listen)
       if (code) {
         window.dispatchEvent(
           new CustomEvent("stochify:viz", {
@@ -67,6 +72,14 @@ export default function ChatSection() {
 
   return (
     <div className="chat-section">
+      {/* 🔹 Header with new chat button */}
+      <div className="chat-header">
+        <button className="new-chat-btn" onClick={handleNewChat} title="New Chat">
+          <LuSquarePen />
+        </button>
+      </div>
+
+      {/* 🔹 Main chat window */}
       <div className="chat-window">
         {messages.map((m, i) => (
           <div key={i} className={`chat-message ${m.role}`}>
@@ -75,17 +88,24 @@ export default function ChatSection() {
         ))}
         {loading && (
           <div className="chat-message assistant" aria-live="polite">
-            Thinking...
+            <FaCircle className="thinking-dot" />
           </div>
         )}
       </div>
 
+      {/* 🔹 Chat input bar */}
       <form className="chatbar" onSubmit={handleSend}>
         <input
           type="text"
           placeholder="Visualize anything"
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleSend(e);
+            }
+          }}
           disabled={loading}
         />
         <button type="submit" aria-label="Send" disabled={loading}>
