@@ -1,43 +1,57 @@
+/* ===== Toggle Container ===== */
 .toggle-container {
   position: absolute;
   top: 1rem;
   right: 1rem;
   display: flex;
-  align-items: center;        /* ensure vertical centering */
-  justify-content: center;    /* ensure horizontal centering */
-  gap: 0.75rem;               /* slightly more space between icons */
-  background: rgba(20, 20, 20, 0.75);
-  border: 1px solid #333;
-  border-radius: 0.6rem;
-  padding: 0.6rem 2rem;     /* larger box size */
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;                            /* more comfortable space between icons */
+  background: #090a0a;                  /* match dropdown background */
+  border: 1px solid #222;
+  border-radius: 1rem;                  /* slightly larger, softer edges */
+  padding: 0.9rem 2rem;                 /* wider and taller box */
+  min-width: 100px;                     /* ensures nice proportions */
+  min-height: 45px;
   z-index: 100;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(8px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); /* soft depth */
-  min-width: 70px;
-  min-height: 44px;
+  animation: fadeInToggle 0.15s ease-in-out;
 }
 
+/* ===== Toggle Buttons ===== */
 .toggle-btn {
+  background: none;
+  border: none;
+  color: #ddddf0;
+  font-size: 1.35rem;                    /* slightly bigger icons */
+  cursor: pointer;
+  transition: color 0.25s ease, transform 0.1s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;                /* consistent circular area */
-  height: 28px;
-  background: transparent;
-  border: none;
-  color: #aaa;
-  font-size: 1.4rem;          /* slightly larger icons */
-  cursor: pointer;
-  transition: color 0.2s, transform 0.1s, background 0.2s;
-  border-radius: 50%;
+  padding: 0;
 }
 
+/* Hover matches the tips icon hover */
 .toggle-btn:hover {
-  color: #e3e3e3;
-  background: rgba(255, 255, 255, 0.08);
+  opacity: 0.7;
 }
 
+/* Active state = soft purple accent */
 .toggle-btn.active {
-  color: #8b5cf6; /* highlighted purple for active mode */
-  background: rgba(139, 92, 246, 0.15);
+  color: #8b5cf6;
+  opacity: 1;
+}
+
+/* ===== Animation ===== */
+@keyframes fadeInToggle {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
