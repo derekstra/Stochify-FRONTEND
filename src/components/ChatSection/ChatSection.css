@@ -4,41 +4,10 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  color: #f1e9fd;
+  color: #ddddf0;
   position: relative;
   transition: width 0.15s ease;
   box-sizing: border-box;
-}
-
-/* ===== Header ===== */
-.chat-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.chat-logo {
-  height: 28px;
-  width: auto;
-  display: block;
-}
-
-.new-chat-btn {
-  background: none;
-  border: none;
-  color: #f1e9fd;
-  font-size: 1.3rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  transition: opacity 0.2s;
-}
-
-.new-chat-btn:hover {
-  opacity: 0.7;
 }
 
 /* ===== Chat Window ===== */
@@ -80,8 +49,11 @@
 
 /* ===== Message Bubbles ===== */
 .chat-message {
+  --bubble-pad-x: 0.9rem;           /* <— single source of truth */
+  --bubble-pad-y: 0.6rem;
+
   max-width: 85%;
-  padding: 0.6rem 0.9rem;
+  padding: var(--bubble-pad-y) var(--bubble-pad-x);
   border-radius: 1rem;
   line-height: 1.4;
   font-size: 1rem;
@@ -93,44 +65,70 @@
 .chat-message.user {
   align-self: flex-end;
   background: #1b1b1f;
-  color: #fff;
+  color: #ddddf0;
   margin-left: auto;
 }
 
 .chat-message.assistant {
   align-self: flex-start;
   background: transparent;
-  color: #f1e9fd;
+  color: #ddddf0;
 }
 
-/* ===== Copy Button (Below Bubble) ===== */
-.copy-btn {
+/* ===== Message Tools (Copy + Redo Buttons) ===== */
+.message-tools {
+  display: flex;
+  align-items: center;              /* vertical alignment */
+  gap: 0.3rem;                     /* tidy space between icons */
+  margin-top: 0rem;
+}
+
+/* Align tools to the same left/right edge as the bubble text */
+.message-tools.assistant {
+  align-self: flex-start;
+  margin-left: var(--bubble-pad-x);
+  opacity: 1;
+}
+
+.message-tools.user {
+  align-self: flex-end;
+  margin-right: var(--bubble-pad-x);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.chat-message-wrapper:hover .message-tools.user {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Icon buttons */
+.copy-btn,
+.redo-btn {
   background: none;
   border: none;
   color: #6c6c78;
-  font-size: 1.05rem;
+  font-size: 1.05rem;               /* keep both the same */
+  line-height: 1;                   /* prevent vertical wobble */
   cursor: pointer;
-  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
   transition: color 0.2s, transform 0.1s;
 }
 
-.copy-btn.user {
-  align-self: flex-end;
-  margin-right: 0.5rem;
+.redo-btn { font-size: 1.05rem; }   /* match copy size exactly */
+
+.copy-btn:hover,
+.redo-btn:hover {
+  color: #ddddf0;
 }
 
-.copy-btn.assistant {
-  align-self: flex-start;
-  margin-left: 0.5rem;
-}
-
-.copy-btn:hover {
-  color: #f1e9fd;
-}
-
-.copy-btn svg {
+.copy-btn svg,
+.redo-btn svg {
   pointer-events: none;
 }
+
 
 /* ===== Chatbar ===== */
 .chatbar {
@@ -152,7 +150,7 @@
   border: none;
   outline: none;
   background: #141516;
-  color: #f1e9fd;
+  color: #ddddf0;
   font-size: 1rem;
   padding: 1.05rem 3.3rem 1.05rem 1.3rem;
   border-radius: 9999px;
@@ -168,7 +166,7 @@
 .chatbar button {
   position: absolute;
   right: 1.85rem;
-  background: #f1e9fd;
+  background: #ddddf0;
   border: none;
   color: black;
   border-radius: 50%;
@@ -189,7 +187,7 @@
 
 /* ===== Loading Dot ===== */
 .thinking-dot {
-  color: #f1e9fd;
+  color: #ddddf0;
   font-size: 0.8rem;
   animation: pulse 1.4s ease-in-out infinite;
 }
@@ -213,14 +211,12 @@
   margin-top: 0.3rem;
 }
 
-/* Assistant tools: always visible, align left */
 .message-tools.assistant {
   justify-content: flex-start;
   margin-left: 0.5rem;
   opacity: 1;
 }
 
-/* User tools: align right, only visible on hover */
 .message-tools.user {
   justify-content: flex-end;
   margin-right: 0.5rem;
@@ -258,8 +254,7 @@
 
 .copy-btn:hover,
 .redo-btn:hover {
-  color: #f1e9fd;
-  transform: scale(1.1);
+  color: #ddddf0;
 }
 
 .copy-btn svg,

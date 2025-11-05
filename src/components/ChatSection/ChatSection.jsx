@@ -1,15 +1,82 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FaArrowUp, FaCircle } from "react-icons/fa6";
-import { CgRedo } from "react-icons/cg"; // ✅ new redo icon
-import { LuSquarePen } from "react-icons/lu";
+import { CgRedo } from "react-icons/cg";
 import { TbCopy, TbCopyCheck } from "react-icons/tb";
 import "./ChatSection.css";
+import ChatSectionHeader from "./ChatSectionHeader/ChatSectionHeader"; // ✅ new header component
+
+// 🔹 Rotating placeholder prompts
+const PLACEHOLDERS = [
+  // 🔹 Physics
+  "the pattern of two overlapping light waves",
+  "the electric field around opposite charges",
+  "a pendulum swinging between energy states",
+  "the orbits of planets around a star",
+  "a particle moving in random Brownian motion",
+
+  // 🔹 Math – 2D
+  "a 2D bell curve of probability density",
+  "a regression line through sample data",
+  "sine and cosine waves on one plane",
+  "where two functions intersect on a grid",
+
+  // 🔹 Math – 3D
+  "a 3D surface of z = sin(x)cos(y)",
+  "a rotating 3D field made of arrows",
+  "a spiral wrapping around the z-axis",
+  "a 3D scatter of clustered points",
+
+  // 🔹 Nature / Music / Creativity
+  "an ant colony’s tunnel network underground",
+  "tree rings forming over time",
+  "sound waves from a guitar chord",
+  "the flow of ocean currents",
+  "a heartbeat shown as a waveform",
+];
 
 export default function ChatSection() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState(null);
+  const [placeholder, setPlaceholder] = useState("");
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const inputRef = useRef(null);
+
+  // 🔹 Auto focus + placeholder typing effect
+  useEffect(() => {
+    inputRef.current?.focus();
+
+    let charIndex = 0;
+    let deleting = false;
+    let interval;
+
+    const typeEffect = () => {
+      const fullText = PLACEHOLDERS[currentIndex];
+      if (!deleting) {
+        setPlaceholder(fullText.substring(0, charIndex + 1));
+        charIndex++;
+        if (charIndex === fullText.length) {
+          deleting = true;
+          clearInterval(interval);
+          setTimeout(() => {
+            interval = setInterval(typeEffect, 20);
+          }, 2500); // pause before deleting
+        }
+      } else {
+        setPlaceholder(fullText.substring(0, charIndex - 1));
+        charIndex--;
+        if (charIndex === 0) {
+          deleting = false;
+          setCurrentIndex((prev) => (prev + 1) % PLACEHOLDERS.length);
+        }
+      }
+    };
+
+    interval = setInterval(typeEffect, 20);
+
+    return () => clearInterval(interval);
+  }, [currentIndex]);
 
   const pushMessage = (role, content) =>
     setMessages((prev) => [...prev, { role, content }]);
@@ -17,7 +84,6 @@ export default function ChatSection() {
   const handleNewChat = () => {
     setMessages([]);
     setInput("");
-    // optional: clear visualization content only, not the entire section
     window.dispatchEvent(
       new CustomEvent("stochify:viz", {
         detail: { code: "// new chat started", dimension: "2d", analysis: "{}" },
@@ -101,40 +167,35 @@ export default function ChatSection() {
 
   return (
     <div className="chat-section">
-      {/* 🔹 Header with logo + new chat button */}
-      <div className="chat-header">
-        <img src="/logo.png" alt="Stochify Logo" className="chat-logo" />
-        <button className="new-chat-btn" onClick={handleNewChat} title="New Chat">
-          <LuSquarePen />
-        </button>
-      </div>
+      {/* ✅ Header is now its own component */}
+      <ChatSectionHeader onNewChat={handleNewChat} />
 
       {/* 🔹 Main chat window */}
       <div className="chat-window">
         {messages.map((m, i) => (
-            <div key={i} className={`chat-message-wrapper ${m.role}`}>
-              <div className={`chat-message ${m.role}`}>{m.content}</div>
+          <div key={i} className={`chat-message-wrapper ${m.role}`}>
+            <div className={`chat-message ${m.role}`}>{m.content}</div>
 
-              <div className={`message-tools ${m.role}`}>
+            <div className={`message-tools ${m.role}`}>
+              <button
+                className={`copy-btn ${m.role}`}
+                onClick={() => handleCopy(m.content, i)}
+                title="Copy message"
+              >
+                {copiedIndex === i ? <TbCopyCheck /> : <TbCopy />}
+              </button>
+
+              {m.role === "assistant" && (
                 <button
-                  className={`copy-btn ${m.role}`}
-                  onClick={() => handleCopy(m.content, i)}
-                  title="Copy message"
+                  className={`redo-btn ${m.role}`}
+                  onClick={() => handleRedo(i)}
+                  title="Regenerate response"
                 >
-                  {copiedIndex === i ? <TbCopyCheck /> : <TbCopy />}
+                  <CgRedo />
                 </button>
-
-                {m.role === "assistant" && (
-                  <button
-                    className={`redo-btn ${m.role}`}
-                    onClick={() => handleRedo(i)}
-                    title="Regenerate response"
-                  >
-                    <CgRedo />
-                  </button>
-                )}
-              </div>
+              )}
             </div>
+          </div>
         ))}
 
         {loading && (
@@ -147,8 +208,9 @@ export default function ChatSection() {
       {/* 🔹 Chat input bar */}
       <form className="chatbar" onSubmit={handleSend}>
         <input
+          ref={inputRef}
           type="text"
-          placeholder="Visualize anything"
+          placeholder={"Visualize " + (placeholder || "")}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
