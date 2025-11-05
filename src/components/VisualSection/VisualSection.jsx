@@ -5,32 +5,30 @@ import CodeVisualToggle from "./CodeVisualToggle/CodeVisualToggle";
 export default function VisualSection() {
   const vizRef = useRef(null);
   const [error, setError] = useState(null);
-  const [mode, setMode] = useState("visual"); // 👈 add this
-  const [lastCode, setLastCode] = useState(""); // 👈 useful for code view
+  const [mode, setMode] = useState("visual");
+  const [lastCode, setLastCode] = useState("");
 
   useEffect(() => {
     async function handleVizEvent(e) {
       const { code, dimension, analysis } = e.detail;
       setError(null);
+      setLastCode(code || ""); // ✅ Save latest code for viewing
 
-      // 1️⃣ Parse cartesian info
       let parsedAnalysis = {};
       try {
         parsedAnalysis = JSON.parse(analysis);
       } catch {
         parsedAnalysis = {};
       }
+
       const isCartesian =
         parsedAnalysis.cartesian === true || parsedAnalysis.cartesian === "true";
 
-      // 2️⃣ Reset visualization area (only if not Cartesian)
-      if (!isCartesian) {
-        const existingViz = document.getElementById("viz");
-        if (existingViz) existingViz.innerHTML = ""; // clear only the viz area
-      }
+      // ✅ Do NOT clear visualization if user is toggling modes — only when new code arrives
+      const existingViz = document.getElementById("viz");
+      if (!isCartesian && existingViz) existingViz.innerHTML = "";
 
-      // 3️⃣ Create or reuse #viz container
-      let viz = document.getElementById("viz");
+      let viz = existingViz;
       if (!viz) {
         viz = document.createElement("div");
         viz.id = "viz";
@@ -39,28 +37,26 @@ export default function VisualSection() {
         vizRef.current.appendChild(viz);
       }
 
-      // 4️⃣ Load required libraries dynamically
       try {
+        // 3D setup
         if (dimension === "3d") {
           const THREE = await import("https://esm.sh/three@0.160.0");
-          const { OrbitControls } = await import("https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js");
+          const { OrbitControls } = await import(
+            "https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js"
+          );
           window.THREE = THREE;
           window.OrbitControls = OrbitControls;
         } else {
-          // D3 (non-module) can still use loadScript
           await loadScript("https://d3js.org/d3.v7.min.js");
         }
 
-        // 5️⃣ If Cartesian, load base plane script
+        // Cartesian skeletons
         if (isCartesian) {
-          if (dimension === "2d") {
-            await loadScript("/static/cartesian2D.js");
-          } else if (dimension === "3d") {
-            await loadScript("/static/cartesian3D.js");
-          }
+          if (dimension === "2d") await loadScript("/static/cartesian2D.js");
+          if (dimension === "3d") await loadScript("/static/cartesian3D.js");
         }
 
-        // 6️⃣ Clean and safely execute the generated code
+        // Clean and run code
         const cleanedCode = code
           .replace(/```[a-zA-Z]*\n?/g, "")
           .replace(/```/g, "")
@@ -72,7 +68,7 @@ export default function VisualSection() {
           .replace(/&gt;/g, ">")
           .trim();
 
-        new Function(cleanedCode)(); // 🚀 run visualization
+        new Function(cleanedCode)();
       } catch (err) {
         console.error("Visualization error:", err);
         setError(err.message);
@@ -85,31 +81,31 @@ export default function VisualSection() {
 
   return (
     <div className="visual-wrapper" ref={vizRef}>
-      <CodeVisualToggle
-        mode={mode}
-        onToggle={(newMode) => setMode(newMode)}
-      />
+      <CodeVisualToggle mode={mode} onToggle={setMode} />
 
-      {error && (
-        <pre className="viz-error">⚠️ Visualization failed: {error}</pre>
-      )}
+      {error && <pre className="viz-error">⚠️ {error}</pre>}
 
-      {mode === "visual" ? (
-        <div id="viz" className="viz-canvas"></div>
-      ) : (
-        <pre className="code-display">{lastCode}</pre>
-      )}
+      {/* ✅ Keep both DOM nodes — just hide one instead of re-rendering */}
+      <div
+        id="viz"
+        className={`viz-canvas ${mode === "visual" ? "active" : "hidden"}`}
+      ></div>
+
+      <pre
+        className={`code-display ${mode === "code" ? "active" : "hidden"}`}
+      >
+        {lastCode || "// No code available yet."}
+      </pre>
     </div>
   );
 }
 
-// Utility loader (used for D3 and Cartesian skeletons only)
 function loadScript(src) {
   return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) return resolve(); // already loaded
+    if (document.querySelector(`script[src="${src}"]`)) return resolve();
     const script = document.createElement("script");
     script.src = src;
-    script.type = "text/javascript"; // no modules here
+    script.type = "text/javascript";
     script.onload = resolve;
     script.onerror = () => reject(new Error("Failed to load " + src));
     document.head.appendChild(script);
