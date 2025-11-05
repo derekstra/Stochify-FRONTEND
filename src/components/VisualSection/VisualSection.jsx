@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import "./VisualSection.css";
+import CodeVisualToggle from "./CodeVisualToggle/CodeVisualToggle";
 
 export default function VisualSection() {
   const vizRef = useRef(null);
   const [error, setError] = useState(null);
+  const [mode, setMode] = useState("visual"); // 👈 add this
+  const [lastCode, setLastCode] = useState(""); // 👈 useful for code view
 
   useEffect(() => {
     async function handleVizEvent(e) {
@@ -21,7 +24,10 @@ export default function VisualSection() {
         parsedAnalysis.cartesian === true || parsedAnalysis.cartesian === "true";
 
       // 2️⃣ Reset visualization area (only if not Cartesian)
-      if (!isCartesian && vizRef.current) vizRef.current.innerHTML = "";
+      if (!isCartesian) {
+        const existingViz = document.getElementById("viz");
+        if (existingViz) existingViz.innerHTML = ""; // clear only the viz area
+      }
 
       // 3️⃣ Create or reuse #viz container
       let viz = document.getElementById("viz");
@@ -79,8 +85,19 @@ export default function VisualSection() {
 
   return (
     <div className="visual-wrapper" ref={vizRef}>
+      <CodeVisualToggle
+        mode={mode}
+        onToggle={(newMode) => setMode(newMode)}
+      />
+
       {error && (
         <pre className="viz-error">⚠️ Visualization failed: {error}</pre>
+      )}
+
+      {mode === "visual" ? (
+        <div id="viz" className="viz-canvas"></div>
+      ) : (
+        <pre className="code-display">{lastCode}</pre>
       )}
     </div>
   );
