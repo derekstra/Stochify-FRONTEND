@@ -1,0 +1,165 @@
+/* ===== Chat Section Header ===== */
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* Left, center, right zones */
+.chat-header-left,
+.chat-header-right {
+  display: flex;
+  align-items: center;
+  width: 80px; /* keeps both sides visually balanced */
+  flex-shrink: 0;
+}
+
+.chat-header-center {
+  flex: 1;
+  text-align: center;
+}
+
+.chat-title {
+  font-family: "Poppins", "Lato", "Helvetica Neue", sans-serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: #ddddf0;
+  letter-spacing: 0.6px;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.chat-logo {
+  height: 28px;
+  width: auto;
+  display: block;
+}
+
+.new-chat-btn {
+  background: none;
+  border: none;
+  color: #ddddf0;
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  transition: opacity 0.2s;
+  width: 100%;
+}
+
+.new-chat-btn:hover {
+  opacity: 0.7;
+}
+
+/* ===== Tips Icon + Wrapper ===== */
+.tips-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.5rem;
+  cursor: pointer;
+}
+
+.tips-icon {
+  color: #ddddf0;
+  font-size: 1.4rem;
+  transition: color 0.2s, transform 0.15s ease;
+}
+
+.tips-wrapper:hover .tips-icon {
+  opacity: 0.7;
+}
+
+/* ===== Enhanced Prompt Tips Dropdown ===== */
+.tips-dropdown {
+  position: absolute;
+  top: 2.2rem;
+  right: 0;
+  background: #0f0f11;
+  border: 1px solid #2a2a2a;
+  border-radius: 0.8rem;
+  padding: 1rem 1.2rem;
+  width: 280px;
+  z-index: 20;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  animation: fadeIn 0.15s ease-in-out;
+}
+
+.tips-dropdown h4 {
+  color: #ddddf0;
+  font-size: 0.95rem;
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+}
+
+.tips-dropdown h5 {
+  color: #ddddf0;
+  font-size: 0.9rem;
+  margin: 0.8rem 0 0.4rem 0;
+  font-weight: 600;
+}
+
+.tips-dropdown p {
+  color: #d0cfe1;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  margin: 0 0 0.6rem 0;
+}
+
+.tips-dropdown ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.2rem 0 0.6rem 0;
+}
+
+.tips-dropdown li {
+  color: #bfbfcb;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  margin-bottom: 0.4rem;
+}
+
+.tips-dropdown code {
+  background: #1a1a1f;
+  color: #f1e9fd;
+  font-family: "Courier New", monospace;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.prompt-examples p {
+  background: #0b0b0c;
+  padding: 0.4rem 0.6rem;
+  margin: 0.3rem 0;
+  border-radius: 0.3rem;
+  font-size: 0.8rem;
+  color: #ddd;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Remove dark background from example <code> blocks only */
+.prompt-examples code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+}
+
