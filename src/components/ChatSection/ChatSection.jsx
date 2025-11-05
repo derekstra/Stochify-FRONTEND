@@ -7,31 +7,46 @@ import ChatSectionHeader from "./ChatSectionHeader/ChatSectionHeader"; // ✅ ne
 
 // 🔹 Rotating placeholder prompts
 const PLACEHOLDERS = [
-  // 🔹 Physics
-  "the pattern of two overlapping light waves",
-  "the electric field around opposite charges",
-  "a pendulum swinging between energy states",
-  "the orbits of planets around a star",
-  "a particle moving in random Brownian motion",
+  // 🔹 Data & Modeling
+  "a network of nodes showing social connections",
+  "a heatmap of website traffic over time",
+  "a stock’s price path simulated with Monte Carlo",
+  "a scatterplot of creativity vs productivity",
+  "a timeline of innovation breakthroughs",
 
-  // 🔹 Math – 2D
-  "a 2D bell curve of probability density",
-  "a regression line through sample data",
-  "sine and cosine waves on one plane",
-  "where two functions intersect on a grid",
+  // 🔹 Math & Physics (lightly kept)
+  "a curve showing exponential decay",
+  "the probability density of a normal distribution",
+  "a 3D spiral growing outward from the origin",
+  "a wave interference pattern fading into chaos",
 
-  // 🔹 Math – 3D
-  "a 3D surface of z = sin(x)cos(y)",
-  "a rotating 3D field made of arrows",
-  "a spiral wrapping around the z-axis",
-  "a 3D scatter of clustered points",
+  // 🔹 Nature & Life
+  "the branching structure of a tree’s roots",
+  "a galaxy swirling around a black hole",
+  "migration paths of birds across continents",
+  "the flow of ocean currents through the globe",
+  "a map of rainfall intensity over a mountain range",
 
-  // 🔹 Nature / Music / Creativity
-  "an ant colony’s tunnel network underground",
-  "tree rings forming over time",
-  "sound waves from a guitar chord",
-  "the flow of ocean currents",
-  "a heartbeat shown as a waveform",
+  // 🔹 Abstract & Design
+  "a geometric pattern made from rotating polygons",
+  "a smooth gradient morphing between colors",
+  "an interactive particle field that reacts to motion",
+  "a glowing orbit trail following random motion",
+  "a network that pulses with rhythm like neurons",
+
+  // 🔹 Art, Music & Emotion
+  "a waveform of a piano melody fading into silence",
+  "the emotional arc of a movie visualized as a line",
+  "a visualization of harmony between multiple notes",
+  "beats per minute changing across a song timeline",
+  "a color field representing different moods",
+
+  // 🔹 Creative AI & Randomness
+  "the randomness of dice rolls shown as probabilities",
+  "an AI’s decision boundaries visualized in 2D",
+  "a chaos pattern generated from random seeds",
+  "the gradient flow inside a neural network",
+  "the path of a thought traveling through a mind"
 ];
 
 export default function ChatSection() {
