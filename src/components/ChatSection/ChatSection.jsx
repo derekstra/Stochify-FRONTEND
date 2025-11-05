@@ -17,9 +17,10 @@ export default function ChatSection() {
   const handleNewChat = () => {
     setMessages([]);
     setInput("");
+    // optional: clear visualization content only, not the entire section
     window.dispatchEvent(
       new CustomEvent("stochify:viz", {
-        detail: { code: "", dimension: "", analysis: "" },
+        detail: { code: "// new chat started", dimension: "2d", analysis: "{}" },
       })
     );
   };
