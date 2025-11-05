@@ -4,7 +4,7 @@ import VisualSection from "../components/VisualSection/VisualSection";
 import "../styles/Home.css";
 
 export default function Home() {
-  const [chatWidth, setChatWidth] = useState(400); // starting width
+  const [chatWidth, setChatWidth] = useState(550); // starting width
   const isResizing = useRef(false);
 
   const handleMouseDown = () => {
