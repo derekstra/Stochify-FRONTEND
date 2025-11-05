@@ -36,13 +36,8 @@ export default function VisualSection() {
       // 4️⃣ Load required libraries dynamically
       try {
         if (dimension === "3d") {
-          // ✅ Use real ES modules instead of loadScript()
-          const THREE = await import(
-            "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
-          );
-          const { OrbitControls } = await import(
-            "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js"
-          );
+          const THREE = await import("https://esm.sh/three@0.160.0");
+          const { OrbitControls } = await import("https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js");
           window.THREE = THREE;
           window.OrbitControls = OrbitControls;
         } else {
