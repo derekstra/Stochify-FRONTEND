@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { FaArrowUp, FaCircle } from "react-icons/fa6";
+import { CgRedo } from "react-icons/cg"; // ✅ new redo icon
 import { LuSquarePen } from "react-icons/lu";
+import { TbCopy, TbCopyCheck } from "react-icons/tb";
 import "./ChatSection.css";
 
 export default function ChatSection() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [copiedIndex, setCopiedIndex] = useState(null);
 
   const pushMessage = (role, content) =>
     setMessages((prev) => [...prev, { role, content }]);
@@ -14,13 +17,26 @@ export default function ChatSection() {
   const handleNewChat = () => {
     setMessages([]);
     setInput("");
-    // clear visuals area too
-    window.dispatchEvent(new CustomEvent("stochify:viz", { detail: { code: "", dimension: "", analysis: "" } }));
+    window.dispatchEvent(
+      new CustomEvent("stochify:viz", {
+        detail: { code: "", dimension: "", analysis: "" },
+      })
+    );
   };
 
-  const handleSend = async (e) => {
-    e.preventDefault();
-    const text = input.trim();
+  const handleCopy = async (content, index) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 1000);
+    } catch (err) {
+      console.error("Copy failed:", err);
+    }
+  };
+
+  const handleSend = async (e, textOverride = null) => {
+    e?.preventDefault?.();
+    const text = textOverride || input.trim();
     if (!text || loading) return;
 
     pushMessage("user", text);
@@ -36,7 +52,10 @@ export default function ChatSection() {
 
       if (!res.ok) {
         const t = await res.text();
-        pushMessage("assistant", `⚠️ Server error (${res.status}): ${t || "unknown"}`);
+        pushMessage(
+          "assistant",
+          `⚠️ Server error (${res.status}): ${t || "unknown"}`
+        );
         setLoading(false);
         return;
       }
@@ -70,10 +89,20 @@ export default function ChatSection() {
     }
   };
 
+  const handleRedo = (index) => {
+    for (let i = index - 1; i >= 0; i--) {
+      if (messages[i].role === "user") {
+        handleSend(null, messages[i].content);
+        break;
+      }
+    }
+  };
+
   return (
     <div className="chat-section">
-      {/* 🔹 Header with new chat button */}
+      {/* 🔹 Header with logo + new chat button */}
       <div className="chat-header">
+        <img src="/logo.png" alt="Stochify Logo" className="chat-logo" />
         <button className="new-chat-btn" onClick={handleNewChat} title="New Chat">
           <LuSquarePen />
         </button>
@@ -82,10 +111,31 @@ export default function ChatSection() {
       {/* 🔹 Main chat window */}
       <div className="chat-window">
         {messages.map((m, i) => (
-          <div key={i} className={`chat-message ${m.role}`}>
-            {m.content}
-          </div>
+            <div key={i} className={`chat-message-wrapper ${m.role}`}>
+              <div className={`chat-message ${m.role}`}>{m.content}</div>
+
+              <div className={`message-tools ${m.role}`}>
+                <button
+                  className={`copy-btn ${m.role}`}
+                  onClick={() => handleCopy(m.content, i)}
+                  title="Copy message"
+                >
+                  {copiedIndex === i ? <TbCopyCheck /> : <TbCopy />}
+                </button>
+
+                {m.role === "assistant" && (
+                  <button
+                    className={`redo-btn ${m.role}`}
+                    onClick={() => handleRedo(i)}
+                    title="Regenerate response"
+                  >
+                    <CgRedo />
+                  </button>
+                )}
+              </div>
+            </div>
         ))}
+
         {loading && (
           <div className="chat-message assistant" aria-live="polite">
             <FaCircle className="thinking-dot" />
