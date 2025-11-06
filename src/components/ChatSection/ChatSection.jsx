@@ -172,13 +172,13 @@ export default function ChatSection() {
       }
 
       const data = await res.json();
-      const { analysis, dimension, code, chat_response } = data;
+      const { analysis, dimension, code, description } = data;
 
-      let reply = chat_response;
+      let reply = description;
       if (!reply) {
         try {
           const parsed = JSON.parse(analysis);
-          reply = parsed.chat_response || "✅ Visualization ready.";
+          reply = parsed.description || "✅ Visualization ready.";
         } catch {
           reply = "✅ Visualization ready.";
         }
