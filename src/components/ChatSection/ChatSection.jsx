@@ -268,6 +268,13 @@ export default function ChatSection() {
           <FaArrowUp />
         </button>
       </form>
+
+      {/* 🔹 Terms of Service footer */}
+      <footer className="chat-terms">
+        <a href="/terms" target="_blank" rel="noopener noreferrer">
+          Terms of Service
+        </a>
+      </footer>
     </div>
   );
 }

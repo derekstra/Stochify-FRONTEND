@@ -136,7 +136,7 @@
   bottom: 0;
   flex-shrink: 0;
   width: 100%;
-  padding: 1rem 1.25rem;
+  padding: 0.5rem 1.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -261,3 +261,19 @@
 .redo-btn svg {
   pointer-events: none;
 }
+
+.chat-terms {
+  text-align: center;
+  font-size: 12px;
+}
+
+.chat-terms a {
+  color: #ddddf0;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.chat-terms a:hover {
+  opacity: 1;
+}
+
