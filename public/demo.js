@@ -1,8 +1,12 @@
 // public/demo.js
 (async () => {
-  // Prevent double init (HMR / multiple mounts)
-  if (window.__SOLAR_DEMO_ACTIVE__) return;
-  window.__SOLAR_DEMO_ACTIVE__ = true;
+  // --- Global demo state (cleanup between runs) ---
+  window.__SOLAR_DEMO__ = window.__SOLAR_DEMO__ || {};
+  const DEMO = window.__SOLAR_DEMO__;
+  if (typeof DEMO.cleanup === "function") {
+    try { DEMO.cleanup(); } catch {}
+  }
+  DEMO.cleanup = null; // will be set later
 
   // === Imports ===
   const THREE = await import("https://esm.sh/three@0.160.0");
@@ -25,18 +29,35 @@
   renderer.setSize(window.innerWidth, window.innerHeight);
 
   const container = document.getElementById("viz") || document.body;
-  // remove previous canvases if any (safety)
-  // while (container.firstChild) container.removeChild(container.firstChild);
+  // remove any old WebGL canvas in #viz (safe if hot-reloading)
+  const oldCanvas = container.querySelector("canvas");
+  if (oldCanvas) oldCanvas.remove();
   container.appendChild(renderer.domElement);
 
-  // === 2D Label Renderer ===
-  const labelRenderer = new CSS2DRenderer();
+  // === 2D Label Renderer (fresh + safe) ===
+  let labelRenderer = window.__LABEL_RENDERER__;
+
+  // If an old label renderer exists, dispose and remove it first
+  if (labelRenderer) {
+    try {
+      labelRenderer.domElement.remove(); // remove from DOM
+    } catch {}
+    delete window.__LABEL_RENDERER__;
+  }
+
+  // Create a new label renderer from scratch
+  labelRenderer = new CSS2DRenderer();
   labelRenderer.setSize(window.innerWidth, window.innerHeight);
+  labelRenderer.domElement.classList.add("label-renderer");
   labelRenderer.domElement.style.position = "absolute";
   labelRenderer.domElement.style.top = "0";
   labelRenderer.domElement.style.pointerEvents = "none";
   labelRenderer.domElement.style.zIndex = "10";
+
+  // Append to the container and store reference globally
   container.appendChild(labelRenderer.domElement);
+  window.__LABEL_RENDERER__ = labelRenderer;
+
 
   // === Lighting ===
   scene.add(new THREE.AmbientLight(0xffffff, 0.5));
@@ -105,7 +126,7 @@
     labelDiv.style.fontWeight = "600";
     labelDiv.style.textShadow = "0 1px 4px rgba(0,0,0,0.7)";
     labelDiv.style.whiteSpace = "nowrap";
-    labelDiv.style.opacity = "0.0"; // start hidden; we’ll fade select ones in
+    labelDiv.style.opacity = "0.0";
     const label = new CSS2DObject(labelDiv);
     label.position.set(0, data.size * 1.5, 0);
     mesh.add(label);
@@ -122,8 +143,7 @@
     labelEntries.push({ mesh, labelDiv });
   }
 
-  // === Controls (Ctrl-drag to pan) ===
-  // === Controls (Ctrl-drag to pan) ===
+  // === Controls ===
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.06;
@@ -132,33 +152,23 @@
   controls.maxDistance = 300;
   controls.target.set(0, 0, 0);
 
-  // Defaults
   controls.mouseButtons = {
     LEFT: THREE.MOUSE.ROTATE,
     MIDDLE: THREE.MOUSE.DOLLY,
     RIGHT: THREE.MOUSE.PAN,
   };
+  const leftDefault = THREE.MOUSE.ROTATE;
 
-  let leftDefault = THREE.MOUSE.ROTATE; // remember default
-
-  // Decide behavior at drag start
-  renderer.domElement.addEventListener("pointerdown", (e) => {
-    // If Ctrl held when drag begins, use left-drag = PAN for this drag
-    if (e.ctrlKey) {
-      controls.mouseButtons.LEFT = THREE.MOUSE.PAN;
-    } else {
-      controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
-    }
-  });
-
-  // Restore after drag ends or pointer leaves
+  const onPointerDown = (e) => {
+    controls.mouseButtons.LEFT = e.ctrlKey ? THREE.MOUSE.PAN : THREE.MOUSE.ROTATE;
+  };
   const restoreLeft = () => (controls.mouseButtons.LEFT = leftDefault);
+  renderer.domElement.addEventListener("pointerdown", onPointerDown);
   renderer.domElement.addEventListener("pointerup", restoreLeft);
   renderer.domElement.addEventListener("pointercancel", restoreLeft);
   renderer.domElement.addEventListener("pointerleave", restoreLeft);
 
-
-  // === Hover detection to show label of hovered planet ===
+  // === Hover detection ===
   const raycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
   let hoveredMesh = null;
@@ -167,52 +177,39 @@
     const rect = renderer.domElement.getBoundingClientRect();
     mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(planets.map(p => p.mesh), true);
     hoveredMesh = intersects.length ? intersects[0].object : null;
   };
   renderer.domElement.addEventListener("pointermove", onPointerMove);
 
-  // === Label selection logic (show few, fade others) ===
+  // === Label selection logic ===
   const MAX_VISIBLE_LABELS = 8;
   function updateLabels() {
-    // Compute distances to camera
     const withDist = labelEntries.map(entry => {
       const pos = new THREE.Vector3();
       entry.mesh.getWorldPosition(pos);
       return { entry, dist: camera.position.distanceTo(pos) };
-    });
+    }).sort((a, b) => a.dist - b.dist);
 
-    // Sort by distance (near → far) and pick top N
-    withDist.sort((a, b) => a.dist - b.dist);
     const visibleSet = new Set(withDist.slice(0, MAX_VISIBLE_LABELS).map(x => x.entry.mesh));
-
-    // Ensure hovered is always visible
     if (hoveredMesh) visibleSet.add(hoveredMesh);
 
-    // Apply opacities
     for (const { entry } of withDist) {
-      const isVisible = visibleSet.has(entry.mesh);
-      const target = isVisible ? 1 : 0;
-      // small ease on opacity
+      const target = visibleSet.has(entry.mesh) ? 1 : 0;
       const current = parseFloat(entry.labelDiv.style.opacity || "0");
-      const next = current + (target - current) * 0.25;
-      entry.labelDiv.style.opacity = next.toFixed(2);
+      entry.labelDiv.style.opacity = (current + (target - current) * 0.25).toFixed(2);
     }
   }
 
   // === Animation Loop ===
   function animate() {
-    requestAnimationFrame(animate);
-
+    DEMO.rafId = requestAnimationFrame(animate);
     sun.rotation.y += 0.002;
-
     for (const p of planets) {
       p.orbit.rotation.y += p.speed;
       p.mesh.rotation.y += 0.002;
     }
-
     updateLabels();
     controls.update();
     renderer.render(scene, camera);
@@ -221,10 +218,27 @@
   animate();
 
   // === Resize ===
-  window.addEventListener("resize", () => {
+  const onResize = () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
     labelRenderer.setSize(window.innerWidth, window.innerHeight);
-  });
+  };
+  window.addEventListener("resize", onResize);
+
+  // --- Register cleanup so the next run tears this down cleanly ---
+  DEMO.cleanup = () => {
+    try { cancelAnimationFrame(DEMO.rafId); } catch {}
+    renderer.domElement.removeEventListener("pointermove", onPointerMove);
+    renderer.domElement.removeEventListener("pointerdown", onPointerDown);
+    renderer.domElement.removeEventListener("pointerup", restoreLeft);
+    renderer.domElement.removeEventListener("pointercancel", restoreLeft);
+    renderer.domElement.removeEventListener("pointerleave", restoreLeft);
+    window.removeEventListener("resize", onResize);
+    try { controls.dispose?.(); } catch {}
+    try { renderer.dispose?.(); } catch {}
+    try { renderer.domElement.remove(); } catch {}
+    // keep labelRenderer instance; just clear labels (next run repopulates)
+    try { labelRenderer.domElement.innerHTML = ""; } catch {}
+  };
 })();
