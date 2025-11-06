@@ -34,7 +34,7 @@ export default function VisualSection() {
     loadDemo();
   }, []);
 
-  // 🔹 Visualization handler (your existing listener)
+  // 🔹 Visualization handler
   useEffect(() => {
     async function handleVizEvent(e) {
       const { code, dimension, analysis } = e.detail;
@@ -51,6 +51,7 @@ export default function VisualSection() {
       const isCartesian =
         parsedAnalysis.cartesian === true || parsedAnalysis.cartesian === "true";
 
+      // 🔹 Prepare visualization container
       const existingViz = document.getElementById("viz");
       if (!isCartesian && existingViz) existingViz.innerHTML = "";
 
@@ -64,29 +65,85 @@ export default function VisualSection() {
       }
 
       try {
+        // 🔹 Dynamically import necessary libraries (only once)
         if (dimension === "3d") {
-          const THREE = await import("https://esm.sh/three@0.160.0");
-          const { OrbitControls } = await import(
-            "https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js"
-          );
-          window.THREE = THREE;
-          window.OrbitControls = OrbitControls;
-        } else {
+          if (!window.THREE) {
+            const THREE = await import("https://esm.sh/three@0.160.0");
+            const { OrbitControls } = await import(
+              "https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js"
+            );
+            window.THREE = THREE;
+            window.OrbitControls = OrbitControls;
+          }
+        } else if (!window.d3) {
           await loadScript("https://d3js.org/d3.v7.min.js");
         }
 
         const cleanedCode = code
-          .replace(/```[a-zA-Z]*\\n?/g, "")
+          // remove <script> wrappers (both normal + module)
+          .replace(/<script[^>]*>/gi, "")
+          .replace(/<\/script>/gi, "")
+          // remove Markdown code fences
+          .replace(/```[a-zA-Z]*\n?/g, "")
           .replace(/```/g, "")
-          .replace(/<\/?script[^>]*>/gi, "")
-          .replace(/import[\\s\\S]*?from\\s+['\"][^'\"]+['\"];?/g, "")
-          .replace(/d3\\.select\\(['\"]body['\"]\\)/g, "d3.select('#viz')")
-          .replace(/new\\s+OrbitControls/g, "new window.OrbitControls")
+          // Convert static ES6 imports to dynamic imports
+          .split('\n')
+          .map(line => {
+            const trimmed = line.trim();
+            
+            // Convert: import * as THREE from 'url'
+            if (trimmed.match(/^import\s+\*\s+as\s+(\w+)\s+from\s+['"]([^'"]+)['"]/)) {
+              return trimmed.replace(
+                /^import\s+\*\s+as\s+(\w+)\s+from\s+['"]([^'"]+)['"]/,
+                'const $1 = await import("$2")'
+              );
+            }
+            
+            // Convert: import { OrbitControls } from 'url'
+            if (trimmed.match(/^import\s+\{([^}]+)\}\s+from\s+['"]([^'"]+)['"]/)) {
+              return trimmed.replace(
+                /^import\s+\{([^}]+)\}\s+from\s+['"]([^'"]+)['"]/,
+                'const { $1 } = await import("$2")'
+              );
+            }
+            
+            // Remove export statements
+            if (trimmed.startsWith('export ')) return '';
+            
+            return line;
+          })
+          .filter(line => line !== '')
+          .join('\n')
+          // handle body selectors for D3
+          .replace(/d3\.select\(['"]body['"]\)/g, "d3.select('#viz')")
+          // fix encoded characters
           .replace(/&lt;/g, "<")
           .replace(/&gt;/g, ">")
           .trim();
 
-        new Function(cleanedCode)();
+        (async () => {
+          try {
+            // Wrap as a real async function that returns a Promise
+            const asyncWrapped = `
+              return (async () => {
+                try {
+                  ${cleanedCode}
+                } catch (err) {
+                  console.error('Visualization runtime error:', err);
+                  throw err;
+                }
+              })();
+            `;
+
+            // Create the function and immediately await its returned promise
+            const fn = new Function(asyncWrapped);
+            await fn();
+          } catch (err) {
+            console.error("Visualization execution failed:", err);
+            setError(err.message || "Visualization error");
+          }
+        })();
+
       } catch (err) {
         console.error("Visualization error:", err);
         setError(err.message);
@@ -126,7 +183,7 @@ export default function VisualSection() {
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src=\"${src}\"]`)) return resolve();
+    if (document.querySelector(`script[src="${src}"]`)) return resolve();
     const script = document.createElement("script");
     script.src = src;
     script.type = "text/javascript";
