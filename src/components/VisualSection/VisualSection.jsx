@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import "./VisualSection.css";
 import CodeVisualToggle from "./CodeVisualToggle/CodeVisualToggle";
+import Prism from "prismjs";
+import "prismjs/themes/prism-tomorrow.css";
+import "prismjs/components/prism-javascript";
+import "prismjs/components/prism-json";
 
 export default function VisualSection() {
   const vizRef = useRef(null);
@@ -8,11 +12,34 @@ export default function VisualSection() {
   const [mode, setMode] = useState("visual");
   const [lastCode, setLastCode] = useState("");
 
+  // 🔹 Auto-load demo.js on first mount
+  useEffect(() => {
+    async function loadDemo() {
+      try {
+        const res = await fetch("/demo.js");
+        const code = await res.text();
+        const event = new CustomEvent("stochify:viz", {
+          detail: {
+            code,
+            dimension: "3d",
+            analysis: JSON.stringify({ cartesian: false }),
+          },
+        });
+        window.dispatchEvent(event);
+      } catch (err) {
+        console.error("Failed to load demo:", err);
+        setError("Failed to load demo.js");
+      }
+    }
+    loadDemo();
+  }, []);
+
+  // 🔹 Visualization handler (your existing listener)
   useEffect(() => {
     async function handleVizEvent(e) {
       const { code, dimension, analysis } = e.detail;
       setError(null);
-      setLastCode(code || ""); // ✅ Save latest code for viewing
+      setLastCode(code || "");
 
       let parsedAnalysis = {};
       try {
@@ -24,7 +51,6 @@ export default function VisualSection() {
       const isCartesian =
         parsedAnalysis.cartesian === true || parsedAnalysis.cartesian === "true";
 
-      // ✅ Do NOT clear visualization if user is toggling modes — only when new code arrives
       const existingViz = document.getElementById("viz");
       if (!isCartesian && existingViz) existingViz.innerHTML = "";
 
@@ -38,7 +64,6 @@ export default function VisualSection() {
       }
 
       try {
-        // 3D setup
         if (dimension === "3d") {
           const THREE = await import("https://esm.sh/three@0.160.0");
           const { OrbitControls } = await import(
@@ -50,20 +75,13 @@ export default function VisualSection() {
           await loadScript("https://d3js.org/d3.v7.min.js");
         }
 
-        // Cartesian skeletons
-        if (isCartesian) {
-          if (dimension === "2d") await loadScript("/static/cartesian2D.js");
-          if (dimension === "3d") await loadScript("/static/cartesian3D.js");
-        }
-
-        // Clean and run code
         const cleanedCode = code
-          .replace(/```[a-zA-Z]*\n?/g, "")
+          .replace(/```[a-zA-Z]*\\n?/g, "")
           .replace(/```/g, "")
           .replace(/<\/?script[^>]*>/gi, "")
-          .replace(/import[\s\S]*?from\s+['"][^'"]+['"];?/g, "")
-          .replace(/d3\.select\(['"]body['"]\)/g, "d3.select('#viz')")
-          .replace(/new\s+OrbitControls/g, "new window.OrbitControls")
+          .replace(/import[\\s\\S]*?from\\s+['\"][^'\"]+['\"];?/g, "")
+          .replace(/d3\\.select\\(['\"]body['\"]\\)/g, "d3.select('#viz')")
+          .replace(/new\\s+OrbitControls/g, "new window.OrbitControls")
           .replace(/&lt;/g, "<")
           .replace(/&gt;/g, ">")
           .trim();
@@ -79,22 +97,28 @@ export default function VisualSection() {
     return () => window.removeEventListener("stochify:viz", handleVizEvent);
   }, []);
 
+  useEffect(() => {
+    if (mode === "code") Prism.highlightAll();
+  }, [lastCode, mode]);
+
   return (
     <div className="visual-wrapper" ref={vizRef}>
       <CodeVisualToggle mode={mode} onToggle={setMode} />
-
       {error && <pre className="viz-error">⚠️ {error}</pre>}
 
-      {/* ✅ Keep both DOM nodes — just hide one instead of re-rendering */}
       <div
         id="viz"
         className={`viz-canvas ${mode === "visual" ? "active" : "hidden"}`}
       ></div>
 
       <pre
-        className={`code-display ${mode === "code" ? "active" : "hidden"}`}
+        className={`code-display language-javascript ${
+          mode === "code" ? "active" : "hidden"
+        }`}
       >
-        {lastCode || "// No code available yet."}
+        <code className="language-javascript">
+          {lastCode || "// No code available yet."}
+        </code>
       </pre>
     </div>
   );
@@ -102,7 +126,7 @@ export default function VisualSection() {
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) return resolve();
+    if (document.querySelector(`script[src=\"${src}\"]`)) return resolve();
     const script = document.createElement("script");
     script.src = src;
     script.type = "text/javascript";
