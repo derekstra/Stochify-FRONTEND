@@ -76,12 +76,19 @@ export default function VisualSection() {
         }
 
         const cleanedCode = code
-          .replace(/```[a-zA-Z]*\\n?/g, "")
+          // remove <script> wrappers (normal + module)
+          .replace(/<script[^>]*type=["']module["'][^>]*>/gi, "")
+          .replace(/<\/script>/gi, "")
+          // remove all import/export lines
+          .replace(/^\s*(import|export)[\s\S]*?;$/gm, "")
+          // remove code fences
+          .replace(/```[a-zA-Z]*\n?/g, "")
           .replace(/```/g, "")
-          .replace(/<\/?script[^>]*>/gi, "")
-          .replace(/import[\\s\\S]*?from\\s+['\"][^'\"]+['\"];?/g, "")
-          .replace(/d3\\.select\\(['\"]body['\"]\\)/g, "d3.select('#viz')")
-          .replace(/new\\s+OrbitControls/g, "new window.OrbitControls")
+          // handle global replacements
+          .replace(/d3\.select\(['"]body['"]\)/g, "d3.select('#viz')")
+          .replace(/\bnew\s+OrbitControls\b/g, "new window.OrbitControls")
+          .replace(/\bTHREE\b/g, "window.THREE")
+          // fix encoded characters
           .replace(/&lt;/g, "<")
           .replace(/&gt;/g, ">")
           .trim();
