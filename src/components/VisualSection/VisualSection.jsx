@@ -69,21 +69,29 @@ function sanitize3DCode(code) {
     .trim();
 }
 
-// === Runner: D3 (2D) ===
 async function run2DVisualization(code) {
   if (!window.d3) await loadScript("https://d3js.org/d3.v7.min.js");
   const cleaned = sanitize2DCode(code);
-  const fn = new Function(`
+
+  // Build the function string safely
+  const wrapped = `
     return (async () => {
-      try { ${cleaned} }
-      catch (err) { console.error("2D Visualization Error:", err); throw err; }
+      try {
+        ${cleaned}
+      } catch (err) {
+        console.error("2D Visualization Error:", err);
+        throw err;
+      }
     })();
-  `);
+  `;
+
+  const fn = new Function(wrapped);
   await fn();
 }
 
 // === Runner: Three.js (3D) ===
 async function run3DVisualization(code) {
+  // Load Three.js and OrbitControls once
   if (!window.THREE) {
     const THREE = await import("https://esm.sh/three@0.160.0");
     const { OrbitControls } = await import(
@@ -94,12 +102,20 @@ async function run3DVisualization(code) {
   }
 
   const cleaned = sanitize3DCode(code);
-  const fn = new Function(`
+
+  // ✅ Build wrapped string safely
+  const wrapped = `
     return (async () => {
-      try { ${cleaned} }
-      catch (err) { console.error("3D Visualization Error:", err); throw err; }
+      try {
+        ${cleaned}
+      } catch (err) {
+        console.error("3D Visualization Error:", err);
+        throw err;
+      }
     })();
-  `);
+  `;
+
+  const fn = new Function(wrapped);
   await fn();
 }
 
