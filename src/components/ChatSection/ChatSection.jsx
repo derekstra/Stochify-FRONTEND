@@ -7,46 +7,35 @@ import ChatSectionHeader from "./ChatSectionHeader/ChatSectionHeader"; // ✅ ne
 
 // 🔹 Rotating placeholder prompts
 const PLACEHOLDERS = [
-  // 🔹 Data & Modeling
-  "a network of nodes showing social connections",
-  "a heatmap of website traffic over time",
-  "a stock’s price path simulated with Monte Carlo",
-  "a scatterplot of creativity vs productivity",
-  "a timeline of innovation breakthroughs",
-
-  // 🔹 Math & Physics (lightly kept)
+  "a network of nodes showing connections",
+  "a heatmap of traffic across time",
+  "a stock's price path from simulation",
+  "a scatterplot of focus and output",
+  "a timeline of innovation bursts",
   "a curve showing exponential decay",
-  "the probability density of a normal distribution",
-  "a 3D spiral growing outward from the origin",
-  "a wave interference pattern fading into chaos",
-
-  // 🔹 Nature & Life
-  "the branching structure of a tree’s roots",
-  "a galaxy swirling around a black hole",
-  "migration paths of birds across continents",
-  "the flow of ocean currents through the globe",
-  "a map of rainfall intensity over a mountain range",
-
-  // 🔹 Abstract & Design
-  "a geometric pattern made from rotating polygons",
-  "a smooth gradient morphing between colors",
-  "an interactive particle field that reacts to motion",
-  "a glowing orbit trail following random motion",
-  "a network that pulses with rhythm like neurons",
-
-  // 🔹 Art, Music & Emotion
-  "a waveform of a piano melody fading into silence",
-  "the emotional arc of a movie visualized as a line",
-  "a visualization of harmony between multiple notes",
-  "beats per minute changing across a song timeline",
-  "a color field representing different moods",
-
-  // 🔹 Creative AI & Randomness
-  "the randomness of dice rolls shown as probabilities",
-  "an AI’s decision boundaries visualized in 2D",
-  "a chaos pattern generated from random seeds",
-  "the gradient flow inside a neural network",
-  "the path of a thought traveling through a mind"
+  "the shape of a normal distribution",
+  "a spiral expanding from the origin",
+  "a wave pattern dissolving to noise",
+  "the branching roots of an old tree",
+  "a galaxy spinning in deep space",
+  "migration routes across continents",
+  "the flow of ocean currents on Earth",
+  "rainfall intensity across mountains",
+  "a geometric pattern in slow motion",
+  "a gradient morphing through hues",
+  "a field of particles reacting to touch",
+  "a glowing orbit tracing random motion",
+  "a neural rhythm pulsing with life",
+  "a waveform fading into the distance",
+  "the emotional arc of a short film",
+  "harmony visualized across notes",
+  "beats changing across a timeline",
+  "a color field shifting with mood",
+  "dice roll outcomes forming patterns",
+  "AI decision zones shown in color",
+  "a chaos pattern generated from seeds",
+  "the gradient flow through a network",
+  "a thought path forming in motion",
 ];
 
 export default function ChatSection() {
@@ -56,15 +45,44 @@ export default function ChatSection() {
   const [copiedIndex, setCopiedIndex] = useState(null);
   const [placeholder, setPlaceholder] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
-  const inputRef = useRef(null);
+  const [hasStartedChat, setHasStartedChat] = useState(false);
 
-  // 🔹 Auto focus + placeholder typing effect
+  const inputRef = useRef(null);
+  const chatWindowRef = useRef(null);
+  const intervalRef = useRef(null);
+
+  // ✅ Append Stochify intro message once on mount
   useEffect(() => {
-    inputRef.current?.focus();
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "assistant",
+        content:
+          "I'm Stochify — I can visualize anything you describe. Just type your request below. Here's an example visualization of the Solar System with realistic orbiting speeds.",
+      },
+    ]);
+  }, []);
+
+  // ✅ Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (chatWindowRef.current) {
+      chatWindowRef.current.scrollTo({
+        top: chatWindowRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    if (hasStartedChat) {
+      // Stop any existing interval
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      setPlaceholder("anything");
+      return;
+    }
 
     let charIndex = 0;
     let deleting = false;
-    let interval;
 
     const typeEffect = () => {
       const fullText = PLACEHOLDERS[currentIndex];
@@ -73,10 +91,10 @@ export default function ChatSection() {
         charIndex++;
         if (charIndex === fullText.length) {
           deleting = true;
-          clearInterval(interval);
+          clearInterval(intervalRef.current);
           setTimeout(() => {
-            interval = setInterval(typeEffect, 20);
-          }, 2500); // pause before deleting
+            intervalRef.current = setInterval(typeEffect, 20);
+          }, 2500);
         }
       } else {
         setPlaceholder(fullText.substring(0, charIndex - 1));
@@ -88,10 +106,9 @@ export default function ChatSection() {
       }
     };
 
-    interval = setInterval(typeEffect, 20);
-
-    return () => clearInterval(interval);
-  }, [currentIndex]);
+    intervalRef.current = setInterval(typeEffect, 20);
+    return () => clearInterval(intervalRef.current);
+  }, [currentIndex, hasStartedChat]);
 
   const pushMessage = (role, content) =>
     setMessages((prev) => [...prev, { role, content }]);
@@ -99,11 +116,13 @@ export default function ChatSection() {
   const handleNewChat = () => {
     setMessages([]);
     setInput("");
+    setHasStartedChat(false);
     window.dispatchEvent(
       new CustomEvent("stochify:viz", {
         detail: { code: "// new chat started", dimension: "2d", analysis: "{}" },
       })
     );
+    inputRef.current?.focus();
   };
 
   const handleCopy = async (content, index) => {
@@ -121,9 +140,19 @@ export default function ChatSection() {
     const text = textOverride || input.trim();
     if (!text || loading) return;
 
+    // 🧩 stop animation immediately before updating state
+    if (intervalRef.current) clearInterval(intervalRef.current);
+
+    // ✅ stop rotating placeholder permanently after first send
+    if (!hasStartedChat) {
+      setHasStartedChat(true);
+      setPlaceholder("anything");
+    }
+
     pushMessage("user", text);
     setInput("");
     setLoading(true);
+    setTimeout(() => inputRef.current?.focus(), 50);
 
     try {
       const res = await fetch("https://api.stochify.com/api/chat", {
@@ -168,6 +197,7 @@ export default function ChatSection() {
       pushMessage("assistant", `⚠️ Network error: ${err?.message || err}`);
     } finally {
       setLoading(false);
+      inputRef.current?.focus();
     }
   };
 
@@ -182,11 +212,9 @@ export default function ChatSection() {
 
   return (
     <div className="chat-section">
-      {/* ✅ Header is now its own component */}
       <ChatSectionHeader onNewChat={handleNewChat} />
 
-      {/* 🔹 Main chat window */}
-      <div className="chat-window">
+      <div className="chat-window" ref={chatWindowRef}>
         {messages.map((m, i) => (
           <div key={i} className={`chat-message-wrapper ${m.role}`}>
             <div className={`chat-message ${m.role}`}>{m.content}</div>
@@ -220,7 +248,6 @@ export default function ChatSection() {
         )}
       </div>
 
-      {/* 🔹 Chat input bar */}
       <form className="chatbar" onSubmit={handleSend}>
         <input
           ref={inputRef}
@@ -235,6 +262,7 @@ export default function ChatSection() {
             }
           }}
           disabled={loading}
+          autoFocus
         />
         <button type="submit" aria-label="Send" disabled={loading}>
           <FaArrowUp />
