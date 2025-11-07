@@ -42,32 +42,54 @@ function sanitize2DCode(code) {
 
 // === Sanitizer: Three.js / 3D ===
 function sanitize3DCode(code) {
-  return code
+  // 1️⃣ Remove script wrappers and markdown
+  let cleaned = code
     .replace(/<script[^>]*>/gi, "")
     .replace(/<\/script>/gi, "")
     .replace(/```[a-zA-Z]*\n?/g, "")
-    .replace(/```/g, "")
+    .replace(/```/g, "");
+
+  // 2️⃣ Normalize bad import paths to CDN equivalents
+  cleaned = cleaned
+    // replace bare "three" imports
+    .replace(/from\s+['"]three['"]/g,
+      'from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"')
+    // replace bare OrbitControls or examples imports
+    .replace(/from\s+['"]three\/examples\/jsm\/controls\/OrbitControls['"]/g,
+      'from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js"');
+
+  // 3️⃣ Convert ES imports to async dynamic imports (browser-safe)
+  cleaned = cleaned
     .split("\n")
     .map((line) => {
       const trimmed = line.trim();
+
       if (/^import\s+\*\s+as/.test(trimmed))
         return trimmed.replace(
           /^import\s+\*\s+as\s+(\w+)\s+from\s+['"]([^'"]+)['"]/,
           'const $1 = await import("$2")'
         );
+
       if (/^import\s+\{/.test(trimmed))
         return trimmed.replace(
           /^import\s+\{([^}]+)\}\s+from\s+['"]([^'"]+)['"]/,
           'const { $1 } = await import("$2")'
         );
+
       if (trimmed.startsWith("export ")) return "";
       return line;
     })
-    .join("\n")
+    .join("\n");
+
+  // 4️⃣ Final cleanup of encoded symbols
+  cleaned = cleaned
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .trim();
+
+  return cleaned;
 }
+
 
 async function run2DVisualization(code) {
   if (!window.d3) await loadScript("https://d3js.org/d3.v7.min.js");
