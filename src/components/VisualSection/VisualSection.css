@@ -89,11 +89,54 @@
 .code-display.active {
   animation: fadeInViz 0.25s ease-in-out;
 }
-
 /* ===== Override Prism Background ===== */
 pre[class*="language-"],
 code[class*="language-"] {
   background: transparent !important;
   box-shadow: none !important;
 }
+
+/* ===== Editable Prism Code Area ===== */
+.editable-pre {
+  width: 100%;
+  height: 100%;
+  background: #0a0c0c;                /* same dark Stochify background */
+  color: #ddddf0;
+  font-family: "Fira Code", monospace;
+  font-size: 0.95rem;
+  border: none;
+  outline: none;                      /* remove white focus outline */
+  padding: 1rem;
+  overflow: auto;
+  white-space: pre;
+  line-height: 1.4;
+  box-sizing: border-box;
+  resize: none;
+  caret-color: #ffffff;               /* thin white text caret */
+  cursor: text;                       /* text-editing cursor */
+  user-select: text;
+  transition: background 0.2s ease;
+}
+
+/* Focused state — clean, no glow */
+.editable-pre:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Optional: nice violet selection highlight */
+.editable-pre::selection {
+  background: rgba(51, 133, 255, 0.45);  /* classic blue highlight */
+  color: #ddddf0;
+}
+
+/* === Visibility states === */
+.editable-pre.active {
+  display: block;
+}
+
+.editable-pre.hidden {
+  display: none;
+}
+
 
