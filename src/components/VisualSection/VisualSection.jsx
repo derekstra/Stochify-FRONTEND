@@ -49,16 +49,14 @@ function sanitize3DCode(code) {
     .replace(/```[a-zA-Z]*\n?/g, "")
     .replace(/```/g, "");
 
-  // 2️⃣ Normalize bad import paths to CDN equivalents
   cleaned = cleaned
     // replace bare "three" imports
     .replace(/from\s+['"]three['"]/g,
       'from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"')
-    // replace bare OrbitControls or examples imports
+
     .replace(/from\s+['"]three\/examples\/jsm\/controls\/OrbitControls['"]/g,
       'from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js"');
 
-  // 3️⃣ Convert ES imports to async dynamic imports (browser-safe)
   cleaned = cleaned
     .split("\n")
     .map((line) => {
@@ -181,6 +179,14 @@ export default function VisualSection() {
   const [mode, setMode] = useState("visual");
   const [lastCode, setLastCode] = useState("");
 
+  const codeRef = useRef(null);
+
+  useEffect(() => {
+    if (mode === "code" && codeRef.current) {
+      requestAnimationFrame(() => Prism.highlightAll());
+    }
+  }, [mode]);
+
   // === Auto-load Demo on Mount ===
   useEffect(() => {
     (async () => {
@@ -236,23 +242,58 @@ export default function VisualSection() {
 
   return (
     <div className="visual-wrapper" ref={vizRef}>
-      <CodeVisualToggle mode={mode} onToggle={setMode} />
+      <CodeVisualToggle
+        mode={mode}
+        onToggle={async (newMode) => {
+          setMode(newMode);
+
+          if (newMode === "visual") {
+            // 🧠 Get latest edits before running
+            const updatedCode = codeRef.current?.__text || lastCode;
+            setLastCode(updatedCode);
+
+            try {
+              const dimension =
+                updatedCode.includes("d3") || updatedCode.includes("d3.")
+                  ? "2d"
+                  : "3d";
+              if (dimension === "2d") await run2DVisualization(updatedCode);
+              else await run3DVisualization(updatedCode);
+            } catch (err) {
+              console.error("Visualization re-run failed:", err);
+              setError(err.message || "Visualization error");
+            }
+          }
+        }}
+
+      />
+
       {error && <pre className="viz-error">⚠️ {error}</pre>}
 
+      {/* === Visualization Canvas === */}
       <div
         id="viz"
         className={`viz-canvas ${mode === "visual" ? "active" : "hidden"}`}
       ></div>
 
+      {/* === Editable Code Editor === */}
       <pre
-        className={`code-display language-javascript ${
+        ref={codeRef}
+        className={`code-display language-javascript editable-pre ${
           mode === "code" ? "active" : "hidden"
         }`}
+        contentEditable
+        suppressContentEditableWarning
+        spellCheck={false}
+        onInput={(e) => {
+          codeRef.current.__text = e.currentTarget.textContent;
+        }}
+        onBlur={() => Prism.highlightAll()}
       >
-        <code className="language-javascript">
-          {lastCode || "// No code available yet."}
-        </code>
+        {lastCode || "// No code available yet."}
       </pre>
+
     </div>
   );
+
 }
