@@ -3,12 +3,11 @@ import { CgRedo } from "react-icons/cg";
 import { TbCopy, TbCopyCheck } from "react-icons/tb";
 import "./ChatSectionChat.css";
 
-export default function ChatSectionChat({ messages, loading, onRedo }) {
+export default function ChatSectionChat({ messages, loading, onRedo, taskId }) {
   const [copiedIndex, setCopiedIndex] = useState(null);
   const [status, setStatus] = useState("");       // live stage text
   const [finalMessage, setFinalMessage] = useState(null);
   const chatWindowRef = useRef(null);
-  const [taskId, setTaskId] = useState(null);
 
   // === Auto-scroll ===
   useEffect(() => {
@@ -20,27 +19,30 @@ export default function ChatSectionChat({ messages, loading, onRedo }) {
     }
   }, [messages, loading, status, finalMessage]);
 
-  // === When a new chat starts ===
-  useEffect(() => {
-    // if your main /api/chat POST sets a task_id, you can store it here
-    // e.g., onSubmit in parent calls setTaskId(newId)
-  }, [taskId]);
-
-  // === Poll backend for status ===
+  // === Poll backend for live status updates ===
   useEffect(() => {
     if (!taskId) return;
 
+    let active = true;
     const poll = async () => {
       try {
         const res = await fetch(`https://api.stochify.com/api/status/${taskId}`);
         const data = await res.json();
+
+        if (!active) return;
+
         if (data.status === "complete") {
           setStatus("");
-          setFinalMessage(data.data?.chat_response || "");
+          setFinalMessage(data.data?.chat_response || "✅ Visualization ready.");
+
+          // ✅ Optionally trigger visualization render
+          window.dispatchEvent(
+            new CustomEvent("stochify:viz", { detail: data.data })
+          );
         } else {
           setStatus(data.status);
           setFinalMessage(null);
-          setTimeout(poll, 1000);
+          setTimeout(poll, 1000); // check again in 1s
         }
       } catch (err) {
         console.error("Polling error:", err);
@@ -48,6 +50,7 @@ export default function ChatSectionChat({ messages, loading, onRedo }) {
     };
 
     poll();
+    return () => { active = false; };
   }, [taskId]);
 
   const handleCopy = async (content, index) => {
@@ -90,12 +93,12 @@ export default function ChatSectionChat({ messages, loading, onRedo }) {
 
       {/* Live status text */}
       {status && (
-        <div className="chat-message assistant status-text" data-text={status}>
+        <div className="chat-message assistant status-text">
           {status}
         </div>
       )}
 
-      {/* Final message */}
+      {/* Final description */}
       {finalMessage && (
         <div className="chat-message assistant" aria-live="polite">
           {finalMessage}
