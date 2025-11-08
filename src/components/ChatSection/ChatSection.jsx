@@ -8,6 +8,7 @@ export default function ChatSection() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasStartedChat, setHasStartedChat] = useState(false);
+  const [taskId, setTaskId] = useState(null);   // ✅ new
   const inputRef = useRef(null);
 
   // ✅ Intro message
@@ -27,6 +28,7 @@ export default function ChatSection() {
   const handleNewChat = () => {
     setMessages([]);
     setHasStartedChat(false);
+    setTaskId(null);
     window.dispatchEvent(
       new CustomEvent("stochify:viz", {
         detail: { code: "// new chat started", dimension: "2d", analysis: "{}" },
@@ -43,6 +45,7 @@ export default function ChatSection() {
     setLoading(true);
 
     try {
+      // 🔹 Start async pipeline
       const res = await fetch("https://api.stochify.com/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -57,29 +60,15 @@ export default function ChatSection() {
       }
 
       const data = await res.json();
-      const { analysis, dimension, code, description } = data;
+      const newTaskId = data.task_id;
+      setTaskId(newTaskId); // ✅ connect to polling system
 
-      let reply = description;
-      if (!reply) {
-        try {
-          const parsed = JSON.parse(analysis);
-          reply = parsed.description || "✅ Visualization ready.";
-        } catch {
-          reply = "✅ Visualization ready.";
-        }
-      }
-
-      pushMessage("assistant", reply);
-
-      if (code) {
-        window.dispatchEvent(
-          new CustomEvent("stochify:viz", { detail: { code, dimension, analysis } })
-        );
-      }
+      // temporary placeholder while backend works
+      pushMessage("assistant", "⏳ Processing your request...");
     } catch (err) {
       pushMessage("assistant", `⚠️ Network error: ${err?.message || err}`);
-    } finally {
       setLoading(false);
+    } finally {
       inputRef.current?.focus();
     }
   };
@@ -101,6 +90,7 @@ export default function ChatSection() {
         messages={messages}
         loading={loading}
         onRedo={handleRedo}
+        taskId={taskId}   // ✅ pass taskId down
       />
 
       <ChatSectionSearch
