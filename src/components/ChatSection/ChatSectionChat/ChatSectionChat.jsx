@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import { io } from "socket.io-client";
 import { CgRedo } from "react-icons/cg";
 import { TbCopy, TbCopyCheck } from "react-icons/tb";
 import "./ChatSectionChat.css";
@@ -9,6 +8,7 @@ export default function ChatSectionChat({ messages, loading, onRedo }) {
   const [status, setStatus] = useState("");       // live stage text
   const [finalMessage, setFinalMessage] = useState(null);
   const chatWindowRef = useRef(null);
+  const [taskId, setTaskId] = useState(null);
 
   // === Auto-scroll ===
   useEffect(() => {
@@ -20,26 +20,35 @@ export default function ChatSectionChat({ messages, loading, onRedo }) {
     }
   }, [messages, loading, status, finalMessage]);
 
-  // === Socket connection to backend ===
+  // === When a new chat starts ===
   useEffect(() => {
-    const socket = io("http://localhost:5000");
+    // if your main /api/chat POST sets a task_id, you can store it here
+    // e.g., onSubmit in parent calls setTaskId(newId)
+  }, [taskId]);
 
-    socket.on("status_update", (data) => {
-      if (data.stage === "complete") {
-        setStatus("");
-        setFinalMessage(data.data?.chat_response || "");
-      } else {
-        setStatus(data.stage);
-        setFinalMessage(null);
+  // === Poll backend for status ===
+  useEffect(() => {
+    if (!taskId) return;
+
+    const poll = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/status/${taskId}`);
+        const data = await res.json();
+        if (data.status === "complete") {
+          setStatus("");
+          setFinalMessage(data.data?.chat_response || "");
+        } else {
+          setStatus(data.status);
+          setFinalMessage(null);
+          setTimeout(poll, 1000);
+        }
+      } catch (err) {
+        console.error("Polling error:", err);
       }
-    });
+    };
 
-    socket.on("connect_error", (err) => {
-      console.error("Socket connection failed:", err);
-    });
-
-    return () => socket.disconnect();
-  }, []);
+    poll();
+  }, [taskId]);
 
   const handleCopy = async (content, index) => {
     try {
@@ -79,14 +88,14 @@ export default function ChatSectionChat({ messages, loading, onRedo }) {
         </div>
       ))}
 
-      {/* Live status text from backend */}
+      {/* Live status text */}
       {status && (
         <div className="chat-message assistant status-text" data-text={status}>
           {status}
         </div>
       )}
 
-      {/* Final assistant response after "complete" */}
+      {/* Final message */}
       {finalMessage && (
         <div className="chat-message assistant" aria-live="polite">
           {finalMessage}
