@@ -32,7 +32,7 @@ export default function ChatSectionChat({ messages, loading, onRedo }) {
 
     const poll = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/status/${taskId}`);
+        const res = await fetch(`https://api.stochify.com/api/status/${taskId}`);
         const data = await res.json();
         if (data.status === "complete") {
           setStatus("");
