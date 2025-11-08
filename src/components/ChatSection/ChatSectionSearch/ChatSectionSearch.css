@@ -1,0 +1,56 @@
+/* ===== Chatbar ===== */
+.chatbar {
+  position: sticky;
+  bottom: 0;
+  flex-shrink: 0;
+  width: 100%;
+  padding: 0.5rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  box-sizing: border-box;
+}
+
+/* ===== Input Field ===== */
+.chatbar input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: #141516;
+  color: #ddddf0;
+  font-size: 1rem;
+  padding: 1.05rem 3.3rem 1.05rem 1.3rem;
+  border-radius: 9999px;
+  box-shadow: inset 0 0 0 1px #242428;
+  transition: box-shadow 0.2s, background 0.2s;
+  box-sizing: border-box;
+}
+
+.chatbar input::placeholder {
+  color: #6c6c78;
+}
+
+/* ===== Send Button ===== */
+.chatbar button {
+  position: absolute;
+  right: 1.85rem;
+  background: #ddddf0;
+  border: none;
+  color: black;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  box-shadow: 0 0 0 2px #1a1a1f;
+}
+
+.chatbar button:hover {
+  background: #999;
+}
