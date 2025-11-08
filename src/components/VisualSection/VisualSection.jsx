@@ -88,7 +88,6 @@ function sanitize3DCode(code) {
   return cleaned;
 }
 
-
 async function run2DVisualization(code) {
   if (!window.d3) await loadScript("https://d3js.org/d3.v7.min.js");
   const cleaned = sanitize2DCode(code);
@@ -265,7 +264,6 @@ export default function VisualSection() {
             }
           }
         }}
-
       />
 
       {error && <pre className="viz-error">⚠️ {error}</pre>}
