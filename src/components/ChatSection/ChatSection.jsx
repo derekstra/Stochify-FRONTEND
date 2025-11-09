@@ -63,8 +63,6 @@ export default function ChatSection() {
       const newTaskId = data.task_id;
       setTaskId(newTaskId); // ✅ connect to polling system
 
-      // temporary placeholder while backend works
-      pushMessage("assistant", "⏳ Processing your request...");
     } catch (err) {
       pushMessage("assistant", `⚠️ Network error: ${err?.message || err}`);
       setLoading(false);
