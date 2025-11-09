@@ -102,7 +102,27 @@ export default function ChatSectionChat({ messages, loading, onRedo, taskId }) {
       {/* Final assistant message (appears once complete) */}
       {finalMessage && (
         <div className="chat-message-wrapper assistant">
-          <div className="chat-message assistant">{finalMessage}</div>
+          <div className="chat-message assistant">
+            {finalMessage}
+          </div>
+
+          <div className="message-tools assistant">
+            <button
+              className="copy-btn assistant"
+              onClick={() => navigator.clipboard.writeText(finalMessage)}
+              title="Copy message"
+            >
+              <TbCopy />
+            </button>
+
+            <button
+              className="redo-btn assistant"
+              onClick={() => onRedo(messages.length)} // redo based on last user
+              title="Regenerate response"
+            >
+              <CgRedo />
+            </button>
+          </div>
         </div>
       )}
     </div>
