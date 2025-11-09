@@ -153,3 +153,20 @@
   }
 }
 
+/* === Temporary Status Bubble (like ChatGPT) === */
+.temp-status-bubble {
+  margin-top: 0.3rem;
+  font-style: italic;
+  font-size: 0.9rem;
+  color: #9ca3af; /* subtle gray */
+  background: none;
+  padding-left: 0.5rem;
+  animation: fadePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes fadePulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+

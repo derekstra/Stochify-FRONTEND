@@ -5,8 +5,8 @@ import "./ChatSectionChat.css";
 
 export default function ChatSectionChat({ messages, loading, onRedo, taskId }) {
   const [copiedIndex, setCopiedIndex] = useState(null);
-  const [status, setStatus] = useState("");       // live stage text
-  const [finalMessage, setFinalMessage] = useState(null);
+  const [status, setStatus] = useState("");       // temporary stage text
+  const [finalMessage, setFinalMessage] = useState(null); // final assistant reply
   const chatWindowRef = useRef(null);
 
   // === Auto-scroll ===
@@ -17,32 +17,32 @@ export default function ChatSectionChat({ messages, loading, onRedo, taskId }) {
         behavior: "smooth",
       });
     }
-  }, [messages, loading, status, finalMessage]);
+  }, [messages, status, finalMessage]);
 
-  // === Poll backend for live status updates ===
+  // === Poll backend for live updates ===
   useEffect(() => {
     if (!taskId) return;
-
     let active = true;
+
     const poll = async () => {
       try {
         const res = await fetch(`https://api.stochify.com/api/status/${taskId}`);
         const data = await res.json();
-
         if (!active) return;
 
         if (data.status === "complete") {
-          setStatus("");
-          setFinalMessage(data.data?.chat_response || "✅ Visualization ready.");
+          setStatus(""); // remove temp status
+          const desc = data.data?.chat_response || "✅ Visualization ready.";
+          setFinalMessage(desc);
 
-          // ✅ Optionally trigger visualization render
+          // trigger visual render
           window.dispatchEvent(
             new CustomEvent("stochify:viz", { detail: data.data })
           );
         } else {
+          // show live backend stage
           setStatus(data.status);
-          setFinalMessage(null);
-          setTimeout(poll, 1000); // check again in 1s
+          setTimeout(poll, 1000);
         }
       } catch (err) {
         console.error("Polling error:", err);
@@ -65,6 +65,7 @@ export default function ChatSectionChat({ messages, loading, onRedo, taskId }) {
 
   return (
     <div className="chat-window" ref={chatWindowRef}>
+      {/* All persistent chat messages */}
       {messages.map((m, i) => (
         <div key={i} className={`chat-message-wrapper ${m.role}`}>
           <div className={`chat-message ${m.role}`}>{m.content}</div>
@@ -88,20 +89,20 @@ export default function ChatSectionChat({ messages, loading, onRedo, taskId }) {
               </button>
             )}
           </div>
+
+          {/* === Temporary status shown just under the user message === */}
+          {i === messages.length - 1 && m.role === "user" && status && (
+            <div className="temp-status-bubble">
+              <span>{status}</span>
+            </div>
+          )}
         </div>
       ))}
 
-      {/* Live status text */}
-      {status && (
-        <div className="chat-message assistant status-text">
-          {status}
-        </div>
-      )}
-
-      {/* Final description */}
+      {/* Final assistant message (appears once complete) */}
       {finalMessage && (
-        <div className="chat-message assistant" aria-live="polite">
-          {finalMessage}
+        <div className="chat-message-wrapper assistant">
+          <div className="chat-message assistant">{finalMessage}</div>
         </div>
       )}
     </div>
