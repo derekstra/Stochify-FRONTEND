@@ -86,6 +86,7 @@ export default function ChatSection() {
 
       <ChatSectionChat
         messages={messages}
+        setMessages={setMessages}   // ✅ pass setter down
         loading={loading}
         onRedo={handleRedo}
         taskId={taskId}
