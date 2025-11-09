@@ -137,7 +137,7 @@
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: waveShift 2s linear infinite;
+  animation: waveShift 2.5s linear infinite;
 }
 
 /* === Wave shimmer across the text color === */
