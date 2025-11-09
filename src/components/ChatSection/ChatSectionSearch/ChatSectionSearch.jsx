@@ -104,10 +104,9 @@ export default function ChatSectionSearch({ onSend, hasStartedChat, inputRef, lo
         placeholder={"Visualize " + (placeholder || "")}
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        disabled={loading}
         autoFocus
       />
-      <button type="submit" aria-label="Send" disabled={loading}>
+      <button type="submit" aria-label="Send">
         <FaArrowUp />
       </button>
     </form>
