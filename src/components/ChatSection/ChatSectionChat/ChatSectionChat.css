@@ -117,51 +117,37 @@
   pointer-events: none;
 }
 
-/* === Temporary Status Bubble (ChatGPT-style) === */
 .temp-status-bubble {
   display: inline-block;
   align-self: flex-start;
   margin-top: 0.3rem;
-  margin-left: 0.75rem; /* small indent like assistant messages */
-  font-style: italic;
+  margin-left: 0.75rem;
   font-size: 1rem;
-  color: #9ca3af; /* subtle gray */
   background: none;
   padding-left: 0.5rem;
   position: relative;
-  overflow: hidden;
   text-align: left;
-  animation: fadePulse 1.6s ease-in-out infinite;
-}
-
-/* Soft pulsing opacity (subtle breathing) */
-@keyframes fadePulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
-}
-
-/* === Wave shimmer across the text === */
-.temp-status-bubble::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
   background: linear-gradient(
     90deg,
-    transparent,
-    rgba(255, 255, 255, 0.25),
-    transparent
+    #6b7280 25%,
+    #d1d5db 50%,
+    #6b7280 75%
   );
-  animation: waveShift 2.2s linear infinite;
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: waveShift 2s linear infinite;
 }
 
+/* === Wave shimmer across the text color === */
 @keyframes waveShift {
-  0%   { left: -100%; }
-  50%  { left: 100%; }
-  100% { left: 100%; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
-
 
 
