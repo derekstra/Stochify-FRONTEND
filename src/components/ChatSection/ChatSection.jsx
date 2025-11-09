@@ -8,10 +8,9 @@ export default function ChatSection() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasStartedChat, setHasStartedChat] = useState(false);
-  const [taskId, setTaskId] = useState(null);   // ✅ new
+  const [taskId, setTaskId] = useState(null);
   const inputRef = useRef(null);
 
-  // ✅ Intro message
   useEffect(() => {
     setMessages([
       {
@@ -45,7 +44,6 @@ export default function ChatSection() {
     setLoading(true);
 
     try {
-      // 🔹 Start async pipeline
       const res = await fetch("https://api.stochify.com/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -61,8 +59,10 @@ export default function ChatSection() {
 
       const data = await res.json();
       const newTaskId = data.task_id;
-      setTaskId(newTaskId); // ✅ connect to polling system
+      setTaskId(newTaskId);
 
+      // ✅ Re-enable input after task starts
+      setLoading(false);
     } catch (err) {
       pushMessage("assistant", `⚠️ Network error: ${err?.message || err}`);
       setLoading(false);
@@ -72,7 +72,7 @@ export default function ChatSection() {
   };
 
   const handleRedo = (index) => {
-    for (let i = index - 1; i >= 0; i--) {
+    for (let i = index; i >= 0; i--) {
       if (messages[i].role === "user") {
         handleSend(messages[i].content);
         break;
@@ -88,7 +88,7 @@ export default function ChatSection() {
         messages={messages}
         loading={loading}
         onRedo={handleRedo}
-        taskId={taskId}   // ✅ pass taskId down
+        taskId={taskId}
       />
 
       <ChatSectionSearch
