@@ -3,10 +3,9 @@ import { CgRedo } from "react-icons/cg";
 import { TbCopy, TbCopyCheck } from "react-icons/tb";
 import "./ChatSectionChat.css";
 
-export default function ChatSectionChat({ messages, loading, onRedo, taskId }) {
+export default function ChatSectionChat({ messages, setMessages, loading, onRedo, taskId }) {
   const [copiedIndex, setCopiedIndex] = useState(null);
-  const [status, setStatus] = useState("");       // temporary stage text
-  const [finalMessage, setFinalMessage] = useState(null); // final assistant reply
+  const [status, setStatus] = useState(""); // temporary stage text
   const chatWindowRef = useRef(null);
 
   // === Auto-scroll ===
@@ -17,7 +16,7 @@ export default function ChatSectionChat({ messages, loading, onRedo, taskId }) {
         behavior: "smooth",
       });
     }
-  }, [messages, status, finalMessage]);
+  }, [messages, status]);
 
   // === Poll backend for live updates ===
   useEffect(() => {
@@ -31,11 +30,16 @@ export default function ChatSectionChat({ messages, loading, onRedo, taskId }) {
         if (!active) return;
 
         if (data.status === "complete") {
-          setStatus(""); // remove temp status
+          setStatus("");
           const desc = data.data?.chat_response || "✅ Visualization ready.";
-          setFinalMessage(desc);
 
-          // trigger visual render
+          // ✅ Push final assistant message into chat
+          setMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: desc },
+          ]);
+
+          // ✅ Trigger visualization
           window.dispatchEvent(
             new CustomEvent("stochify:viz", { detail: data.data })
           );
@@ -51,7 +55,7 @@ export default function ChatSectionChat({ messages, loading, onRedo, taskId }) {
 
     poll();
     return () => { active = false; };
-  }, [taskId]);
+  }, [taskId, setMessages]);
 
   const handleCopy = async (content, index) => {
     try {
@@ -98,33 +102,6 @@ export default function ChatSectionChat({ messages, loading, onRedo, taskId }) {
           )}
         </div>
       ))}
-
-      {/* Final assistant message (appears once complete) */}
-      {finalMessage && (
-        <div className="chat-message-wrapper assistant">
-          <div className="chat-message assistant">
-            {finalMessage}
-          </div>
-
-          <div className="message-tools assistant">
-            <button
-              className="copy-btn assistant"
-              onClick={() => navigator.clipboard.writeText(finalMessage)}
-              title="Copy message"
-            >
-              <TbCopy />
-            </button>
-
-            <button
-              className="redo-btn assistant"
-              onClick={() => onRedo(messages.length)} // redo based on last user
-              title="Regenerate response"
-            >
-              <CgRedo />
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
